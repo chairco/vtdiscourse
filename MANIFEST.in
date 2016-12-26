@@ -1,0 +1,7 @@
+include requirements.txt
+
+include tox.ini  
+recursive-include tests *.py  
+
+graft docs  
+prune docs/_build  
