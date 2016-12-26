@@ -7,7 +7,7 @@
     web site from gitbook
 
     :copyright: (c) 2016 by chairco <chairco@gmail.com>.
-    :license: BSD.
+    :license: MIT.
 """
 
 import uuid
