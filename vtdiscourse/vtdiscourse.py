@@ -1,19 +1,17 @@
 # -*- coding: utf-8
-"""An g0v's project vTaiwan module.
+# An g0v's project vTaiwan module.
+# module author:: chairco <chairco@gmail.com>
 
-.. moduleauthor:: chairco <chairco@gmail.com>
-
-"""
 import json
 import requests
 
+from pprint import pprint
+
 from pydiscourse import DiscourseClient
 
-class Parser(object):
-    """Parser the markdown file, and follow format create a .json file
-    Args:
 
-    """
+class Parser(object):
+    # Parser the markdown file, and follow format create a .json file
     def __init__(self, *args, **kwargs):
         pass
 
@@ -27,15 +25,6 @@ class Discourse(object):
     search a session from Discourse
     create a new session for Discourse
     url, username, key should exist then yield error
-
-    :api_username: user login discourse
-    :api_key: the certification key for discourse
-
-    >>> from vtdiscourse import Discourse
-    >>> Discourse.client()
-
-    .. versionadded:: 0.0.1
-    
     """
     def __init__(self, url, api_username, api_key, *args, **kwargs):
         super(Discourse, self).__init__()
@@ -48,6 +37,9 @@ class Discourse(object):
     @property
     def client(self):
         """This is the activate to get certification from discourse web
+        :url     : Discourse web
+        :username: Discourse user
+        :key     : Discourse api key
         """
         client = DiscourseClient(
             self.url,
@@ -58,46 +50,29 @@ class Discourse(object):
 
     def create_category(self, name, color, text_color='FFFFFF',
                       permissions=None, parent=None, **kwargs):
-        """"
-        Args:
-            name:
-            color:
-            text_color:
-            permissions: dict of 'everyone', 'admins', 'moderators', 'staff' with values of ???
-            parent:
-            **kwargs: help(DiscourseClient)
-        ex:
+        """Create the category on Discourse
+        :name       :
+        :color      :
+        :text_color :
+        :permissions: dict of 'everyone', 'admins', 'moderators', 'staff' with values of ???
+        :parent     :
+        :kwargs     :
         >>> discourse.create_category(name="自動產生", color="3c3945")
         """
         return self.client.create_category(name=name, color=color, text_color=text_color,
                                            permissions=permissions, parent=parent, **kwargs)
 
-
     def get_user(self, username):
-        """Get user information for a specific user
-        
-        Args:
-            username: username to return
-        Returns:
-            dict of user information
-        ex:
-        >>> print(discourse.get_user(username='vTaiwan'))
-        """
+        # Get user information for a specific user
         return self.client.user(username)
 
     @property
     def get_user_topics(self):
-        """Gets a list of topics created by user 'vTaiwan'
-        ex:
-        >>> print(discourse.get_user_topics)
-        """
+        # Gets a list of topics created by user 'vTaiwan'
         return self.client.topics_by('vTaiwan')
 
     @property
     def get_all_categories(self):
-        """
-        return all catreories by list type
-        """
         return [category['name'] for category in self.client.categories()]
 
     @property
@@ -106,17 +81,12 @@ class Discourse(object):
 
     @property
     def get_category_topics(self):
-        """
-        return all meta-data topics list
-        """
         return self.get_category.get('topic_list').get('topics')
 
     def get_category_topic_content(self, id, key):
         """Get the key's content in the topics 
-        
-        Args:
-            id: int, index of the topics range
-            key: string
+        :id : int, index of the topics range
+        :key: string
         """
         if not isinstance(id, int):
             raise ValueError('{0} Should be INT'.format(id))
@@ -126,25 +96,23 @@ class Discourse(object):
             raise KeyError('{0} Not exist in {1}'.format(key, [self.get_category_topics[id].keys()]))
         return self.get_category_topics[id].get(key)
         
+    def get_post(self, topic_id, post_id):
+        # Get the post /t/{0}/{1}.json
+        return self.client.post(topic_id, post_id)
+
     def get_posts(self, id=908):
-        """Gets the posts form id, default id 908(meta-data)
-        ex:
-        >>> print(discourse.get_posts)
-        """
+        # Gets the posts /t/{0}/posts.json, default id 908(meta-data)
         return self.client.posts(topic_id=id)
 
     def test(self, **kwargs):
         """
-        ex:
         >>> print(discourse.test(a=1, b=2, c=3))
+        "{'a': 1, 'b': 2, 'c': 3}"
         """
         return self._test(**kwargs)
 
     def _test(self, **kwargs):
         return kwargs
-
-    def __del__(self):
-        pass
 
 
 if __name__ == '__main__':
@@ -152,4 +120,10 @@ if __name__ == '__main__':
         url = 'https://talk.vtaiwan.tw',
         api_username='',
         api_key='')
-    print(discourse.get_category_topic_content(id=5, key='ids'))
+    id = discourse.get_category_topic_content(id=0, key='id')
+    print(id)
+    content = discourse.get_category_topic_content(id=0, key='excerpt')
+    pprint(content)
+
+
+
