@@ -40,7 +40,7 @@ setup(
     version=vtdiscourse.__version__,
     author=vtdiscourse.__author__,
     author_email=vtdiscourse.__email__,
-    url='http://your.host.name/demo',
+    url='https://github.com/chairco/vtdiscourse',
     description='Help to create topic on talk.vTaiwan web.',
     long_description=__doc__,
     packages=find_packages(),

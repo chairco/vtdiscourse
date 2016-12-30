@@ -12,8 +12,42 @@ from pydiscourse import DiscourseClient
 
 class Parser(object):
     # Parser the markdown file, and follow format create a .json file
-    def __init__(self, *args, **kwargs):
-        pass
+    def __init__(self, filename, *args, **kwargs):
+        self.filename = filename
+
+    @property
+    def get_gitbook(self):
+        return requests.get(self.get_gitbook_url).text
+
+    @property
+    def get_package(self):
+        return json.loads(requests.get(self.get_url).text)
+
+    @property
+    def get_name(self):
+        name = self.get_package.get('description')
+        return name
+
+    @property
+    def get_url(self):
+        # TODO(chairco) should check json format
+        # transfer web to "https://raw.githubusercontent.com/g0v/directors-election-gitbook/master/book.json"
+        g0v_page = "https://raw.githubusercontent.com/g0v/"
+        name = self._content().get('github')[0].get('name')
+        path = "/master/package.json"
+        return g0v_page + name + path
+
+    @property
+    def get_gitbook_url(self):
+        # return gitbook url
+        g0v_page = "https://g0v.github.io/"
+        name = self._content().get('github')[0].get('name')
+        return g0v_page + name
+
+    def _content(self):
+        with open(self.filename) as fp:
+            json_data = json.load(fp)
+        return json_data
 
     def __del__(self):
         pass
@@ -120,10 +154,7 @@ if __name__ == '__main__':
         url = 'https://talk.vtaiwan.tw',
         api_username='',
         api_key='')
-    id = discourse.get_category_topic_content(id=0, key='id')
-    print(id)
-    content = discourse.get_category_topic_content(id=0, key='excerpt')
-    pprint(content)
+
 
 
 
