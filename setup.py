@@ -47,6 +47,9 @@ setup(
     install_requires=requirements('requirements.txt'),
     tests_require=['tox'],
     cmdclass={'test': Tox},
+    entry_points={'console_scripts': [
+        'vtd = vtdiscourse.__main__:main',
+    ]},
     classifiers=[
         'Development Status :: 1 - Planning',
         'Environment :: Console',

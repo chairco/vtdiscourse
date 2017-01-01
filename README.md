@@ -4,8 +4,8 @@
 
 
 ## 說明
-* `package.json`: gitbook 相關設定，用其來建立討論區分類中文名稱
-* `SUMMARY.md`: gitbook 大綱，用他產生分類內的討論話題（topics）
++ `package.json`: gitbook 相關設定，用其來建立討論區分類中文名稱
++ `SUMMARY.md`: gitbook 大綱，用他產生分類內的討論話題（topics）
 
 
 ## 安裝方法
@@ -20,7 +20,27 @@
 `python setup.py install`
 
 
-## 使用方法
+## 使用方法（透過指令）
+
+需要先建立 json 檔案, ex: vtaiwan.json：
+```
+{
+  "github":[
+        {
+            "name":"directors-election-gitbook"
+        } 
+    ]
+}
+```
+
+接著執行：
+
+
+`vtd -n "api_user" -p "api_key" -s GET`
+
+
+
+## 使用方法（透過程式）
 請注意某些內容必須要有管理員權限的 API User, Key 才能存取。
 
 ### 設定 API
