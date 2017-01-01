@@ -17,10 +17,21 @@ from bs4 import BeautifulSoup as bs
 from collections import OrderedDict
 
 
-class Parser(object):
+class Create(object):
+
+    def __init__(self, *args, **kwargs):
+        self.outfile = 'content.json'
+
+    def dumps(self, data):
+        with open(self.outfile, 'w') as fp:
+            fp.write(json.dumps(data, indent=4, ensure_ascii=False))
+
+
+class Parser(Create):
     # Parser the markdown file, and follow format create a .json file
 
     def __init__(self, filename, githubfile, *args, **kwargs):
+        super(Parser, self).__init__(filename, githubfile, *args, **kwargs)
         self.filename = filename
         self._githubfile = githubfile
 
@@ -88,9 +99,6 @@ class Parser(object):
         with open(self.filename) as fp:
             json_data = json.load(fp)
         return json_data
-
-    def _createjson(self):
-        pass
 
     def __del__(self):
         pass
