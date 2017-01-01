@@ -2,40 +2,80 @@
 # An g0v's project vTaiwan module.
 # module author:: chairco <chairco@gmail.com>
 
+import os
+import re
 import json
 import requests
+import markdown
 
 from pprint import pprint
 
 from pydiscourse import DiscourseClient
 
+from bs4 import BeautifulSoup as bs
+
+from collections import OrderedDict
+
 
 class Parser(object):
     # Parser the markdown file, and follow format create a .json file
-    def __init__(self, filename, *args, **kwargs):
+
+    def __init__(self, filename, githubfile, *args, **kwargs):
         self.filename = filename
+        self._githubfile = githubfile
 
     @property
-    def get_gitbook(self):
-        return requests.get(self.get_gitbook_url).text
-
-    @property
-    def get_package(self):
-        return json.loads(requests.get(self.get_url).text)
+    def get_content(self):
+        if os.path.splitext(self._githubfile)[-1] == '.json':
+            return json.loads(requests.get(self.get_url).text)
+        elif os.path.splitext(self._githubfile)[-1] == '.md':
+            return requests.get(self.get_url).text
+        else:
+            return None
 
     @property
     def get_name(self):
-        name = self.get_package.get('description')
-        return name
+        if os.path.splitext(self._githubfile)[-1] == '.json':
+            return self.get_content.get('description')
+        else:
+            return None
+
+    @property
+    def get_summary(self):
+        summary = self.get_content
+        html = markdown.markdown(summary)
+        soup = bs(html, 'html.parser')
+        # print(soup.prettify())
+        return [ link.get('href') for link in soup.find_all('a')]
+
+    @property
+    def get_topics_content(self, topics_data=list()):
+        """建立一個 json base
+        return Orderdict() format 
+        """
+        summary = self.get_summary
+        for topic in summary:
+            self.githubfile = topic
+            htmlcontent = markdown.markdown(self.get_content)
+            soup = bs(htmlcontent, 'html.parser')
+            topics_data.append(OrderedDict([(topic, [{tag.name: tag.string} for tag in soup.find_all(True)])])) 
+        return topics_data
 
     @property
     def get_url(self):
         # TODO(chairco) should check json format
-        # transfer web to "https://raw.githubusercontent.com/g0v/directors-election-gitbook/master/book.json"
         g0v_page = "https://raw.githubusercontent.com/g0v/"
         name = self._content().get('github')[0].get('name')
-        path = "/master/package.json"
-        return g0v_page + name + path
+        path = "/master/"
+        return g0v_page + name + path + self._githubfile
+
+    @get_url.setter
+    def githubfile(self, githubfile):
+        self._githubfile = githubfile 
+
+    @property
+    def get_gitbook(self):
+        return requests.get(self.get_gitbook_url).text
 
     @property
     def get_gitbook_url(self):
@@ -48,6 +88,9 @@ class Parser(object):
         with open(self.filename) as fp:
             json_data = json.load(fp)
         return json_data
+
+    def _createjson(self):
+        pass
 
     def __del__(self):
         pass
@@ -147,14 +190,5 @@ class Discourse(object):
 
     def _test(self, **kwargs):
         return kwargs
-
-
-if __name__ == '__main__':
-    discourse = Discourse(
-        url = 'https://talk.vtaiwan.tw',
-        api_username='',
-        api_key='')
-
-
 
 
