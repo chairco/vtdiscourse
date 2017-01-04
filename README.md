@@ -22,22 +22,9 @@
 
 ## 使用方法（透過指令）
 
-需要先建立 json 檔案, ex: vtaiwan.json：
-```
-{
-  "github":[
-        {
-            "name":"directors-election-gitbook"
-        } 
-    ]
-}
-```
-
 接著執行：
 
-
-`vtd -n "api_user" -p "api_key" -s GET`
-
+`vtd -n "api_user" -p "api_key" -g "gihub's repo name" -s GET`
 
 
 ## 使用方法（透過程式）
@@ -51,20 +38,11 @@
         api_key='金鑰')
 ```
 
-### 設定 json 參數檔案與要讀取 repo 名稱
-+ 預設 `vtdiscourse/vtaiwan.json` 可修改檔案內容 `name` 對應 repo 名稱
-```
-{
-  "github":[
-        {
-            "name":"repo 名稱",
-        } 
-    ]
-}
-```
+### 設定要讀取 repo 名稱
+
 + 設定參數檔案、讀取 github 的檔案名稱：
 
-`>>> parm = Parser(filename='vtaiwan.json', githubfile='package.json')`
+`>>> parm = Parser(name='directors-election-gitbook', githubfile='package.json')`
 
 
 ### 快樂的取得 `package.json` 相對應內容：

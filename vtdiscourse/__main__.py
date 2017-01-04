@@ -13,6 +13,9 @@ DESCRIPTION
     -p, --password
         password for Discourse api_eky.
 
+    -g, --repo name
+        github's repo name
+
     -s, --service
         GET: get .md content
         NAME: get description
@@ -23,7 +26,7 @@ DESCRIPTION
     -v, --verbose
 
 EXAMPLES
-    vtd -n "api_user" -p "api_key"
+    vtd -n "api_user" -p "api_key" -g "directors-election-gitbook"
 
 
 
@@ -65,6 +68,8 @@ def main(argv=None):
             name = a
         elif o in ('-p', '--password'):
             password = a
+        elif o in ('-g', '--github'):
+            github = a
         elif o in ('-s', '--service'):
             service_type = a
 
@@ -81,10 +86,10 @@ def main(argv=None):
         api_key=password)
 
     if service_type == 'GET':
-        parm = Parser(filename='vtaiwan.json', githubfile='SUMMARY.md')
+        parm = Parser(name=github, githubfile='SUMMARY.md')
         print(parm.get_topics_content)
     elif service_type == "NAME":
-        parm = Parser(filename='vtaiwan.json', githubfile='package.json')
+        parm = Parser(name=github, githubfile='package.json')
         description = parm.get_name
     else:
         print(discourse)
