@@ -32,9 +32,10 @@ class Create(object):
 class Parser(Create):
     # Parser the markdown file, and follow format create a .json file
 
-    def __init__(self, filename, githubfile, *args, **kwargs):
-        super(Parser, self).__init__(filename, githubfile, *args, **kwargs)
-        self.filename = filename
+    def __init__(self, name, githubfile, *args, **kwargs):
+        super(Parser, self).__init__(name, githubfile, *args, **kwargs)
+        #self.filename = filename
+        self.name = name
         self._githubfile = githubfile
 
     @property
@@ -77,7 +78,8 @@ class Parser(Create):
     @property
     def get_url(self):
         g0v_page = "https://raw.githubusercontent.com/g0v/"
-        name = self._content().get('github')[0].get('name')
+        #name = self._content().get('github')[0].get('name')
+        name = self._content
         path = "/master/"
         return g0v_page + name + path + self._githubfile
 
@@ -93,13 +95,18 @@ class Parser(Create):
     def get_gitbook_url(self):
         # return gitbook url
         g0v_page = "https://g0v.github.io/"
-        name = self._content().get('github')[0].get('name')
+        #name = self._content().get('github')[0].get('name')
+        name = self._content
         return g0v_page + name
 
+    #def _content(self):
+    #    with open(self.filename) as fp:
+    #        json_data = json.load(fp)
+    #    return json_data
+
+    @property
     def _content(self):
-        with open(self.filename) as fp:
-            json_data = json.load(fp)
-        return json_data
+        return str(self.name).strip()
 
     def __del__(self):
         pass
