@@ -141,13 +141,33 @@ class Discourse(object):
         )
         return client
 
-    def post_category(self, category):
+    def _search(self, term, **kwargs):
+        return self.client.search(term=term, **kwargs)
+
+    def serarch_topic(self, term, key, **kwargs):
+        keys = ['categories', 'grouped_search_result', 
+                'users', 'topics', 'posts']
+        if key not in keys: 
+            raise KeyError('argument should be categories, grouped_search_result,'
+                           'users, topics, posts')
+        content = self._search(term=term, **kwargs)
+        if content.get('grouped_search_result') != None:
+            return content.get(key)
+        else:
+            return content
+
+    def post_category(self, category, text_color='FFFFFF',
+                      permissions=None, parent=None, **kwargs):
         if category in self.get_all_categories:
             return False
         else:
             r = lambda: random.randint(0,255)
             color = '%02X%02X%02X' % (r(), r(), r())
-            return self.create_category(name=category, color=color)
+            return self._create_category(name=category,
+                                        color=color,
+                                        permissions=permissions,
+                                        parent=parent,
+                                        **kwargs)
 
     def post_topics(self, content, **kwargs):
         """This is create the post with the category, use kwargs
@@ -157,7 +177,7 @@ class Discourse(object):
         """
         return self.client.create_post(content=content, **kwargs)
 
-    def create_category(self, name, color, text_color='FFFFFF',
+    def _create_category(self, name, color, text_color='FFFFFF',
                         permissions=None, parent=None, **kwargs):
         """Create the category on Discourse
             :name       :
@@ -203,7 +223,7 @@ class Discourse(object):
         # Get the post /t/{0}/{1}.json
         return self.client.post(topic_id, post_id)
 
-    def get_posts(self, id=908):
+    def get_posts(self, id):
         # Gets the posts /t/{0}/posts.json, default id 908(meta-data)
         return self.client.posts(topic_id=id)
 

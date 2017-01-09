@@ -61,5 +61,12 @@
 >>> print(parm.get_topics_content)
 ```
 
+## 測試
+
+請在專案內執行 `py.test`
+
+
+## LICENSE
+MIT LICENSE
 
 
