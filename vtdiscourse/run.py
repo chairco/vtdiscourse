@@ -58,7 +58,6 @@ def supervisor():
 def create_content(name, githubfile):
     logger.info('start creare JSON file.')
     parm = Parser(name=name, githubfile=githubfile)  # Get SUMMARY.md content and create to json.
-    #parm.githubfile = githubfile
     
     # Parser the md file.
     topics = parm.get_topics_content
@@ -96,20 +95,35 @@ def parser_html(json_data, content=''):
     return content
 
 
-def parser_markdown(markdown_data):
-    """切成兩部分 #, ##"""
-    #parser = CommonMark.Parser()
-    #ast = parser.parse(markdown_data)
-    #renderer = CommonMark.HtmlRenderer()
-    #html = renderer.render(ast)
-    #return html
-    
+def parser_markdown(markdown_data):    
     from markdown_to_json.vendor import CommonMark
     from markdown_to_json.markdown_to_json import Renderer, CMarkASTNester
+
     ast = CommonMark.DocParser().parse(markdown_data)
     list_nested = CMarkASTNester().nest(ast)
     stringified = Renderer().stringify_dict(list_nested)
     return stringified
+
+
+def inset_topic(md, contents, parm, discourse):
+    parm.githubfile = md
+    order_data = parser_markdown(markdown_data=parm.get_content)
+    for k , v in order_data.get(contents[0]).items():
+        post_title = k
+        if isinstance(v, list):
+            post_content = '。\n'.join(["* "+i for i in v])
+        elif isinstance(v, dict):
+            for k2, v2 in v.items():
+                content = '。\n'.join(["* "+i for i in v2])
+            post_content = k2 + '\n' + content
+        else:
+            if len(v) < 20:
+                post_content = v + str('。'*int(20-len(v)))
+            post_content = v
+        logger.info("{0}\n內容：\n{1}\n".format(post_title, post_content))
+        #logger.info(discourse.post_topics(content=post_content,
+        #                                  title=post_title, 
+        #                                  category=contents[0]))
 
 
 def insert_discourse(id, category, summary_data, parm, discourse):
@@ -135,27 +149,9 @@ def insert_discourse(id, category, summary_data, parm, discourse):
             if topic_data == None:
                 logger.info('準備建立子類別 {0} 與內容.'.format(contents[0])) # 建立 sub_catrgory
                 logger.info(discourse.post_category(name=contents[0],parent=category))
-                
-                # inset topic
-                parm.githubfile = md
-                order_data = parser_markdown(markdown_data=parm.get_content)
-                for k , v in order_data.get(contents[0]).items():
-                    post_title = k
-                    if isinstance(v, list):
-                        post_content = '。\n'.join(["* "+i for i in v])
-                    elif isinstance(v, dict):
-                        for k2, v2 in v.items():
-                            content = '。\n'.join(["* "+i for i in v2])
-                        post_content = k2 + '\n' + content
-                    else:
-                        if len(v) < 20:
-                            post_content = v + str('。'*int(20-len(v)))
-                        post_content = v
-                    logger.info("{0}\n{1}".format(post_title, post_content))
-                    logger.info(discourse.post_topics(content=post_content,
-                                                      title=post_title, 
-                                                      category=contents[0]))
+                inset_topic(md=md, contents=contents, parm=parm, discourse=discourse)
             else:
+                #inset_topic(md=md, contents=contents, parm=parm, discourse=discourse)
                 logger.info("已經存在，請手動修改 Title: {0}, ID: {1}".format(topic_data.get('title'),
                                                                            topic_data.get('id')))
     
@@ -172,7 +168,7 @@ def deploy(api_username, api_key, name):
     # Get package.json content
     parm = Parser(name=name, githubfile='package.json')
     category = parm.get_name
-    logger.info('Start deploy...法案: ' + category)
+    logger.info('Start deploy, 法案: ' + category)
     
     # Get the SUMMARY file content
     parm.githubfile = 'SUMMARY.md'
@@ -203,18 +199,33 @@ def deploy(api_username, api_key, name):
                      summary_data=summary_data,
                      parm=parm,
                      discourse=discourse)
+    return 'Success.'
+
+def supervisors():
+    signal = Signal()
+    spinner = threading.Thread(target=spin,
+                               args=('\u2603  Deploy ', signal))
+    print('spinner object:', spinner)
+    spinner.start()
+    result = deploy(api_username='vtaiwan',
+                    api_key='',
+                    name='')
+    signal.go = False
+    spinner.join()
+    return result
 
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.INFO, 
+    logging.basicConfig(filename='vtd.log',
+                        level=logging.INFO, 
                         format='%(asctime)s:%(name)s:%(levelname)s:%(message)s')
     
-    #result = supervisor()
-    #print('Answer:', result)
-
-    create_content(name='directors-election-gitbook', githubfile='SUMMARY.md')
-    deploy(api_username='vtaiwan',
-           api_key='',
-           name='')
+    
+    #create_content(name='directors-election-gitbook', githubfile='SUMMARY.md')
+    result = supervisors()
+    print('Result:', result)
+    #deploy(api_username='vtaiwan',
+    #       api_key='0f7fd879262b40b66fff2c136ed4650dadec10fb999f79d6df27eefce4fba826',
+    #       name='directors-election-gitbook')
     
 
