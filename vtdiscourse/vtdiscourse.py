@@ -48,6 +48,19 @@ class Parser(Create):
             return None
 
     @property
+    def get_topics_content(self, topics_data=list()):
+        """建立一個 json base
+        return Orderdict() format 
+        """
+        summary = self.get_summary
+        for topic in summary:
+            self.githubfile = topic # 改讀 topic file
+            htmlcontent = markdown.markdown(self.get_content)
+            soup = bs(htmlcontent, 'html.parser')
+            topics_data.append(OrderedDict([(topic, [{tag.name: tag.string} for tag in soup.find_all(True)])])) 
+        return topics_data
+
+    @property
     def get_name(self):
         if os.path.splitext(self._githubfile)[-1] == '.json':
             return self.get_content.get('description')
@@ -61,19 +74,6 @@ class Parser(Create):
         soup = bs(html, 'html.parser')
         #print(soup.prettify())
         return [ link.get('href') for link in soup.find_all('a')]
-
-    @property
-    def get_topics_content(self, topics_data=list()):
-        """建立一個 json base
-        return Orderdict() format 
-        """
-        summary = self.get_summary
-        for topic in summary:
-            self.githubfile = topic # 改讀 topic file
-            htmlcontent = markdown.markdown(self.get_content)
-            soup = bs(htmlcontent, 'html.parser')
-            topics_data.append(OrderedDict([(topic, [{tag.name: tag.string} for tag in soup.find_all(True)])])) 
-        return topics_data
 
     @property
     def get_url(self):
@@ -192,11 +192,6 @@ class Discourse(object):
                                            permissions=permissions, parent=parent, **kwargs)
 
     @property
-    def get_user_topics(self):
-        # Gets a list of topics created by user 'vTaiwan'
-        return self.client.topics_by('vTaiwan')
-
-    @property
     def get_all_categories(self):
         return [category['name'] for category in self.client.categories()]
 
@@ -224,6 +219,6 @@ class Discourse(object):
         return self.client.post(topic_id, post_id)
 
     def get_posts(self, id):
-        # Gets the posts /t/{0}/posts.json, default id 908(meta-data)
+        # Gets the posts /t/{0}/posts.json, ex. id=908(meta-data)
         return self.client.posts(topic_id=id)
 
