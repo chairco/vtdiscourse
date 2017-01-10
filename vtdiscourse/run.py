@@ -98,11 +98,18 @@ def parser_html(json_data, content=''):
 
 def parser_markdown(markdown_data):
     """切成兩部分 #, ##"""
-    parser = CommonMark.Parser()
-    ast = parser.parse(markdown_data)
-    renderer = CommonMark.HtmlRenderer()
-    html = renderer.render(ast)
-    return html
+    #parser = CommonMark.Parser()
+    #ast = parser.parse(markdown_data)
+    #renderer = CommonMark.HtmlRenderer()
+    #html = renderer.render(ast)
+    #return html
+    
+    from markdown_to_json.vendor import CommonMark
+    from markdown_to_json.markdown_to_json import Renderer, CMarkASTNester
+    ast = CommonMark.DocParser().parse(markdown_data)
+    list_nested = CMarkASTNester().nest(ast)
+    stringified = Renderer().stringify_dict(list_nested)
+    return stringified
 
 
 def insert_discourse(id, category, summary_data, parm, discourse):
@@ -128,14 +135,27 @@ def insert_discourse(id, category, summary_data, parm, discourse):
             if topic_data == None:
                 logger.info('準備建立子類別 {0} 與內容.'.format(contents[0])) # 建立 sub_catrgory
                 logger.info(discourse.post_category(name=contents[0],parent=category))
-                #post_content, post_title = '', ''
-                #logger.info(discourse.post_topics(content=post_content,
-                #                                  title=post_title, 
-                #                                  category=contents[0]))
-            else:
+                
+                # inset topic
                 parm.githubfile = md
-                markdown_data = parm.get_content
-                print(parser_markdown(markdown_data=markdown_data))
+                order_data = parser_markdown(markdown_data=parm.get_content)
+                for k , v in order_data.get(contents[0]).items():
+                    post_title = k
+                    if isinstance(v, list):
+                        post_content = '。\n'.join(["* "+i for i in v])
+                    elif isinstance(v, dict):
+                        for k2, v2 in v.items():
+                            content = '。\n'.join(["* "+i for i in v2])
+                        post_content = k2 + '\n' + content
+                    else:
+                        if len(v) < 20:
+                            post_content = v + str('。'*int(20-len(v)))
+                        post_content = v
+                    logger.info("{0}\n{1}".format(post_title, post_content))
+                    logger.info(discourse.post_topics(content=post_content,
+                                                      title=post_title, 
+                                                      category=contents[0]))
+            else:
                 logger.info("已經存在，請手動修改 Title: {0}, ID: {1}".format(topic_data.get('title'),
                                                                            topic_data.get('id')))
     
