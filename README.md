@@ -20,7 +20,7 @@
 `python setup.py install`
 
 
-## 使用方法（透過指令）
+## 使用方法 1（透過指令）
 
 取得法案名稱方法：
 
@@ -32,10 +32,11 @@
 `vtd -n "api_user" -p "api_key" -g "gihub's repo name" -s DEPLOY`
 
 
-## 使用方法（撰寫程式）
+## 使用方法 2（撰寫程式）
+
 請注意某些內容必須要有管理員權限的 API-User, API-Key 才能存取。
 
-### 設定 API
+#### 設定 API
 ```
 >>> discourse = Discourse(
         url = 'https://talk.vtaiwan.tw',
@@ -43,20 +44,20 @@
         api_key='金鑰')
 ```
 
-### 設定要讀取 repo 名稱
+#### 設定要讀取 repo 名稱
 
 + 設定參數檔案、讀取 github 的檔案名稱：
 
 `>>> parm = Parser(name='directors-election-gitbook', githubfile='package.json')`
 
 
-### 快樂的取得 `package.json` 相對應內容：
+#### 快樂的取得 `package.json` 相對應內容：
 ```
 # Get 法案的中文名稱
 >>> print(parm.get_name)
 ```
 
-### 快樂的取得 `SUMMARY.md` 內容有兩種方式：
+#### 快樂的取得 `SUMMARY.md` 內容有兩種方式：
 + 尚未建立物件時，直接設定物件參數 `parm = Parser(filename='vtaiwan.json', githubfile='SUMMARY.md')`
 + 已經建立物件 `parm = Parser(filename='vtaiwan.json', githubfile='package.json')`，直接透過 `setter` 方法 `parm.githubfile = "SUMMARY.md"` 轉為讀取 `SUMMARY.md`
 
