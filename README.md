@@ -1,11 +1,11 @@
 # vtdiscourse
 這個工具是專為 [talk vTaiwan](https://talk.vtaiwan.tw/) 所建立。
-目的是當法案建立一個 gitbook 後要根據內容建立對應的討論區與問題，而 gitbook 建立在 g0v 的 gihub repo，因此想法是根據 g0v repo 名稱去爬出 `package.json`, `SUMMARY.md` 兩個檔案內容。
+目的是當法案建立一個 gitbook 後要根據其內容建立對應的討論區與問題。gitbook 是建立在 g0v 的 gihub repo，因此做法是根據 g0v repo 名稱去爬出 `packeage.json` 的法案名稱與 `SUMMARY.md` 與對應的 `.md` 檔案的內容。
 
 
 ## 說明
-+ `package.json`: gitbook 相關設定，用其來建立討論區分類中文名稱
-+ `SUMMARY.md`: gitbook 大綱，用他產生分類內的討論話題（topics）
++ `package.json`: gitbook 相關設定，用其來建立討論區分類法案的中文名稱。
++ `SUMMARY.md`: gitbook 大綱，用他取得子分類名稱與對應的內容。
 
 
 ## 安裝方法
@@ -22,13 +22,18 @@
 
 ## 使用方法（透過指令）
 
-接著執行：
+取得法案名稱方法：
 
 `vtd -n "api_user" -p "api_key" -g "gihub's repo name" -s GET`
 
 
-## 使用方法（透過程式）
-請注意某些內容必須要有管理員權限的 API User, Key 才能存取。
+建立 talk.vTaiwan 討論內容：
+
+`vtd -n "api_user" -p "api_key" -g "gihub's repo name" -s DEPLOY`
+
+
+## 使用方法（撰寫程式）
+請注意某些內容必須要有管理員權限的 API-User, API-Key 才能存取。
 
 ### 設定 API
 ```
@@ -50,7 +55,6 @@
 # Get 法案的中文名稱
 >>> print(parm.get_name)
 ```
-
 
 ### 快樂的取得 `SUMMARY.md` 內容有兩種方式：
 + 尚未建立物件時，直接設定物件參數 `parm = Parser(filename='vtaiwan.json', githubfile='SUMMARY.md')`
