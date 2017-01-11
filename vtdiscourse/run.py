@@ -1,7 +1,11 @@
 # -*- coding: utf-8
 # create talk.vTaiwan category and topic
 
-from vtdiscourse import Discourse, Parser
+try:
+    from vtdiscourse.vtdiscourse import Discourse, Parser
+except Exception as e:
+    from vtdiscourse import Discourse, Parser
+
 from pprint import pprint
 from collections import OrderedDict
 from pydiscourse import DiscourseClient
@@ -47,6 +51,7 @@ def create_content(name, githubfile):
     topics = parm.get_topics_content
     parm.dumps(data=topics)
     logger.info('create JSON file "content.json" success.')
+    return 'Create content.json Success.'
 
 
 def read_content(filename='content.json'):
@@ -115,6 +120,7 @@ def insert_discourse(id, category, summary_data, parm, discourse):
     """insert discourse, 先檢查有沒有 README.md"""
     # 讀取 content.json
     # 根據 MD 檔案建立對應的 category 和內容。並且 Insert。改用 OrderedDict 結構
+    # TODO()改成讀取網站上的 content.json
     json_data = read_content()
     discourse_data = list()
     for md in json_data:
@@ -129,23 +135,30 @@ def insert_discourse(id, category, summary_data, parm, discourse):
     for md in datas:
         if md != 'README.md':
             contents = datas.get(md).split('\r\n')
+            print("建立 {0} 的 Topic: {1}" .format(md, contents[0]))
             logger.info("建立 {0} 的 Topic: {1}" .format(md, contents[0]))
             topic_data = search_discourse(discourse=discourse, term=contents[0])
             if topic_data == None:
+                print('準備建立子類別 {0} 與內容.'.format(contents[0]))
                 logger.info('準備建立子類別 {0} 與內容.'.format(contents[0])) # 建立 sub_catrgory
-                logger.info(discourse.post_category(name=contents[0],parent=category))
+                #logger.info(discourse.post_category(name=contents[0],parent=category))
                 inset_topic(md=md, contents=contents, parm=parm, discourse=discourse)
             else:
-                #inset_topic(md=md, contents=contents, parm=parm, discourse=discourse)
+                #inset_topic(md=md, contents=contents, parm=parm, discourse=discourse) # 暫時
+                print("已經存在，請手動修改 Title: {0}, ID: {1}".format(topic_data.get('title'),
+                                                                     topic_data.get('id')))
                 logger.info("已經存在，請手動修改 Title: {0}, ID: {1}".format(topic_data.get('title'),
                                                                            topic_data.get('id')))
-    
+
 
 def search_discourse(discourse, term):
     c = discourse.serarch_topic(term=term, key='topics')
     for t in c:
-        if term in t.get('title'):
-            return t
+        try:
+            if term in t.get('title'):
+                return t
+        except Exception as e:
+            raise ValueError("Not exist {0} search result: {1}".format(term, c))
     return None           
 
 
@@ -153,16 +166,18 @@ def deploy(api_username, api_key, name):
     # Get package.json content
     parm = Parser(name=name, githubfile='package.json')
     category = parm.get_name
+    print('Start deploy, 法案: ' + category)
     logger.info('Start deploy, 法案: ' + category)
     
     # Get the SUMMARY file content
     parm.githubfile = 'SUMMARY.md'
     summary_data = parm.get_summary
+    print('Summary_data: {0}' .format(', '.join(summary_data)))
     logger.info('Summary_data: {0}' .format(', '.join(summary_data)))
 
     # Discourse settings
     discourse = Discourse(
-        host = 'https://talk.vtaiwan.tw',
+        host = 'https://talk.vtaiwan.tw/',
         api_username=api_username,
         api_key=api_key)
 
@@ -170,9 +185,11 @@ def deploy(api_username, api_key, name):
     if not DEBUG:
         ret = discourse.post_category(category=category)
         if ret == False:
+            print('Category already exist.')
             logger.info('Category already exist.')
-            category_id = search_discourse(discourse=discourse, term='公司法：董監事選任').get('category_id')
+            category_id = search_discourse(discourse=discourse, term=category).get('category_id')
         else:
+            print('Create Category success.')
             logger.info('Create Category success.')
             category_id = ret.get('category').get('id')
     else:
@@ -183,20 +200,29 @@ def deploy(api_username, api_key, name):
                      summary_data=summary_data,
                      parm=parm,
                      discourse=discourse)
-    return 'Success.'
+    logger.info('{0} Finish {1}'.format('-'*10, '-'*10))
+    
+    return 'Deploy to talk.vTaiwan Success, Please check vtd.log.'
 
 
-def supervisors():
+def supervisors(api_key, api_username, name):
     signal = Signal()
     spinner = threading.Thread(target=spin,
                                args=('\u2603  Deploy ', signal))
-    print('spinner object:', spinner)
+    #print('spinner object:', spinner)
     spinner.start()
-    result = deploy(api_username=os.environ.get('vTaiwan_api_user'),
-                    api_key=os.environ.get('vTaiwan_api_key'),
-                    name='directors-election-gitbook')
-    signal.go = False
-    spinner.join()
+    try:
+        result = create_content(name=name,
+                                githubfile='SUMMARY.md')
+        print('Result:', result)
+        result = deploy(api_username=api_username,
+                        api_key=api_key,
+                        name=name)
+    except Exception as e:
+        raise e
+    finally:
+        signal.go = False
+        spinner.join()
     return result
 
 
@@ -210,7 +236,9 @@ if __name__ == '__main__':
     #       api_key=os.environ.get('vTaiwan_api_key'),
     #       name='directors-election-gitbook')
 
-    result = supervisors()
+    result = supervisors(api_key=os.environ.get('vTaiwan_api_key'),
+                         api_username=os.environ.get('vTaiwan_api_user'),
+                         name='directors-election-gitbook')
     print('Result:', result)
 
 

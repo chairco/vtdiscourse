@@ -172,7 +172,6 @@ class Discourse(DiscourseClient):
         """override the DiscourseClient.category"""
         if parent:
             name = u'{0}/{1}'.format(parent, name)
-
         return self.client._get(u'/c/{0}.json'.format(name), **kwargs)
 
     def get_category(self, name, parent=None, **kwargs):
@@ -199,7 +198,8 @@ class Discourse(DiscourseClient):
         return [category['name'] for category in self.client.categories()]
 
     def _search(self, term, **kwargs):
-        return self.client.search(term=term, **kwargs)
+        kwargs['q'] = term
+        return self._get('/search.json', **kwargs)
 
     def _create_category(self, name, color, text_color='FFFFFF',
                         permissions=None, parent=None, **kwargs):

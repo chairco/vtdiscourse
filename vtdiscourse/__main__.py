@@ -19,6 +19,7 @@ DESCRIPTION
     -s, --service
         GET: get .md content
         NAME: get description
+        DEPLOY: deploy the category and sub-category in talk.vTaiwan
 
     -h, --help
         show usage
@@ -26,8 +27,8 @@ DESCRIPTION
     -v, --verbose
 
 EXAMPLES
-    vtd -n "api_user" -p "api_key" -g "directors-election-gitbook"
-
+    1. vtd -n "api_user" -p "api_key" -g "directors-election-gitbook" -s GET
+    2. vtd -n "api_user" -p "api_key" -g "directors-election-gitbook" -s DEPLOY
 
 
 COPYRIGHT
@@ -41,6 +42,7 @@ import sys
 import getopt
 
 from vtdiscourse.vtdiscourse import Discourse, Parser
+from vtdiscourse.run import supervisors
 
 def main(argv=None):
     if not argv:
@@ -51,7 +53,7 @@ def main(argv=None):
         sys.exit(0)
 
     try:
-        opts, args = getopt.getopt(argv, "s:n:p:hv", ["service", "name", "password", "help"])
+        opts, args = getopt.getopt(argv, "g:s:n:p:hv", ["github","service", "name", "password", "help"])
     except getopt.GetoptError as e:
         print(__doc__)
         sys.exit("invalid option: " + str(e))
@@ -81,16 +83,22 @@ def main(argv=None):
             sys.exit("invalid type")
 
     discourse = Discourse(
-        url = 'https://talk.vtaiwan.tw',
+        host = 'https://talk.vtaiwan.tw',
         api_username=name,
         api_key=password)
+
+    service_type = str(service_type).upper()
 
     if service_type == 'GET':
         parm = Parser(name=github, githubfile='SUMMARY.md')
         print(parm.get_topics_content)
-    elif service_type == "NAME":
+    elif service_type == 'NAME':
         parm = Parser(name=github, githubfile='package.json')
         description = parm.get_name
+    elif service_type == 'DEPLOY':
+        if not github: sys.exit("invalid type")
+        result = supervisors(api_key=password, api_username=name, name=github)
+        print('Result', result)
     else:
         print(discourse)
 
