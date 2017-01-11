@@ -51,13 +51,13 @@
 `>>> parm = Parser(name='directors-election-gitbook', githubfile='package.json')`
 
 
-#### 快樂的取得 `package.json` 相對應內容：
+#### 快樂的取得 `package.json` 相對應內容
 ```
 # Get 法案的中文名稱
 >>> print(parm.get_name)
 ```
 
-#### 快樂的取得 `SUMMARY.md` 內容有兩種方式：
+#### 快樂的取得 `SUMMARY.md` 內容有兩種方式
 + 尚未建立物件時，直接設定物件參數 `parm = Parser(filename='vtaiwan.json', githubfile='SUMMARY.md')`
 + 已經建立物件 `parm = Parser(filename='vtaiwan.json', githubfile='package.json')`，直接透過 `setter` 方法 `parm.githubfile = "SUMMARY.md"` 轉為讀取 `SUMMARY.md`
 
@@ -73,5 +73,3 @@
 
 ## LICENSE
 MIT LICENSE
-
-
