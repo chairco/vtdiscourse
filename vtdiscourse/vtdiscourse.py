@@ -19,22 +19,22 @@ from collections import OrderedDict
 
 
 class Create(object):
-    # create json file
-
     def __init__(self, *args, **kwargs):
         self.outfile = 'content.json'
 
     def dumps(self, data):
+        # create json file
         with open(self.outfile, 'w') as fp:
             fp.write(json.dumps(data, indent=4, ensure_ascii=False))
 
 
 class Parser(Create):
-    # Parser the markdown file, and follow format create a .json file
-
+    """Parser the markdown file, and follow format create a .json file
+    :name
+    :githubfile
+    """
     def __init__(self, name, githubfile, *args, **kwargs):
         super(Parser, self).__init__(name, githubfile, *args, **kwargs)
-        #self.filename = filename
         self.name = name
         self._githubfile = githubfile
 
@@ -49,7 +49,7 @@ class Parser(Create):
 
     @property
     def get_topics_content(self, topics_data=list()):
-        """建立一個 json base
+        """create json base
         return Orderdict() format 
         """
         summary = self.get_summary
@@ -78,7 +78,6 @@ class Parser(Create):
     @property
     def get_url(self):
         g0v_page = "https://raw.githubusercontent.com/g0v/"
-        #name = self._content().get('github')[0].get('name')
         name = self._content
         path = "/master/"
         return g0v_page + name + path + self._githubfile
@@ -99,11 +98,6 @@ class Parser(Create):
         name = self._content
         return g0v_page + name
 
-    #def _content(self):
-    #    with open(self.filename) as fp:
-    #        json_data = json.load(fp)
-    #    return json_data
-
     @property
     def _content(self):
         return str(self.name).strip()
@@ -112,20 +106,20 @@ class Parser(Create):
         pass
 
 
-class Discourse(object):
+class Discourse(DiscourseClient):
     """Get the Discourse content
     
     Search a session from Discourse
     Create a new session for Discourse
-    url, username, key should exist then yield error
+    host, username, key should exist then yield error
     """
-    def __init__(self, url, api_username, api_key, *args, **kwargs):
-        super(Discourse, self).__init__()
-        self.args = args
-        self.kwargs = kwargs
-        self.url = url
+    def __init__(self, host, api_username, api_key, *args, **kwargs):
+        super(Discourse, self).__init__(host, api_username, api_key)
+        self.host = host
         self.api_username = api_username
         self.api_key = api_key
+        self.args = args
+        self.kwargs = kwargs
 
     @property
     def client(self):
@@ -135,14 +129,11 @@ class Discourse(object):
         :key     : Discourse api key
         """
         client = DiscourseClient(
-            self.url,
+            self.host,
             api_username=self.api_username,
             api_key=self.api_key
         )
         return client
-
-    def _search(self, term, **kwargs):
-        return self.client.search(term=term, **kwargs)
 
     def serarch_topic(self, term, key, **kwargs):
         keys = ['categories', 'grouped_search_result', 
@@ -177,26 +168,15 @@ class Discourse(object):
         """
         return self.client.create_post(content=content, **kwargs)
 
-    def _create_category(self, name, color, text_color='FFFFFF',
-                        permissions=None, parent=None, **kwargs):
-        """Create the category on Discourse
-            :name       :
-            :color      :
-            :text_color :
-            :permissions: dict of 'everyone', 'admins', 'moderators', 'staff' with values of ???
-            :parent     :
-            :kwargs     :
-            >>> discourse.create_category(name="自動產生", color="3c3945")
-            """
-        return self.client.create_category(name=name, color=color, text_color=text_color,
-                                           permissions=permissions, parent=parent, **kwargs)
+    def catetory(self, name, parent=None, **kwargs):
+        """override the DiscourseClient.category"""
+        if parent:
+            name = u'{0}/{1}'.format(parent, name)
 
-    @property
-    def get_all_categories(self):
-        return [category['name'] for category in self.client.categories()]
+        return self.client._get(u'/c/{0}.json'.format(name), **kwargs)
 
-    def get_category(self, name='meta-data'):
-        return self.client.category(name=name)
+    def get_category(self, name, parent=None, **kwargs):
+        return self.category(name=name, parent=parent, **kwargs)
 
     def get_category_topics(self, name='meta-data'):
         return self.get_category(name=name).get('topic_list').get('topics')
@@ -213,12 +193,29 @@ class Discourse(object):
         if key not in self.get_category_topics[id]:
             raise KeyError('{0} Not exist in {1}'.format(key, [self.get_category_topics[id].keys()]))
         return self.get_category_topics[id].get(key)
-        
-    def get_post(self, topic_id, post_id):
-        # Get the post /t/{0}/{1}.json
-        return self.client.post(topic_id, post_id)
 
-    def get_posts(self, id):
-        # Gets the posts /t/{0}/posts.json, ex. id=908(meta-data)
-        return self.client.posts(topic_id=id)
+    @property
+    def get_all_categories(self):
+        return [category['name'] for category in self.client.categories()]
+
+    def _search(self, term, **kwargs):
+        return self.client.search(term=term, **kwargs)
+
+    def _create_category(self, name, color, text_color='FFFFFF',
+                        permissions=None, parent=None, **kwargs):
+        """Create the category on Discourse
+            :name       :
+            :color      :
+            :text_color :
+            :permissions: dict of 'everyone', 'admins', 'moderators', 'staff' with values of ???
+            :parent     :
+            :kwargs     :
+            >>> discourse.create_category(name="自動產生", color="3c3945")
+            """
+        return self.client.create_category(name=name, color=color, text_color=text_color,
+                                           permissions=permissions, parent=parent, **kwargs)
+
+
+        
+
 

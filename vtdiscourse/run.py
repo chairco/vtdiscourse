@@ -1,9 +1,12 @@
 # -*- coding: utf-8
+# create talk.vTaiwan category and topic
 
 from vtdiscourse import Discourse, Parser
 from pprint import pprint
 from collections import OrderedDict
 from pydiscourse import DiscourseClient
+from bs4 import BeautifulSoup
+
 import json
 import random
 import logging
@@ -13,7 +16,6 @@ import time
 import sys
 import os
 import CommonMark
-from bs4 import BeautifulSoup
 
 
 logger = logging.getLogger(__name__)
@@ -35,24 +37,6 @@ def spin(msg, signal):
         if not signal.go:
             break
     write(' ' * len(status) + '\x08' * len(status))
-
-
-def slow_function():
-    #假裝等待 I/O 等待一段很長的時間
-    time.sleep(3)
-    return 42
-
-
-def supervisor():
-    signal = Signal()
-    spinner = threading.Thread(target=spin,
-                               args=('\u2603  working', signal))
-    print('spinner object:', spinner)
-    spinner.start()
-    result = slow_function()
-    signal.go = False
-    spinner.join()
-    return result
 
 
 def create_content(name, githubfile):
@@ -90,7 +74,6 @@ def parser_html(json_data, content=''):
             elif k2 == 'li' and v2 != None:
                 content = content + '+ '  + v2 + '\n'
             elif v2 != None:
-                #logger.info('other tag: {0}'.format(k2))
                 content = content + v2 + '\n'
     return content
 
@@ -121,9 +104,11 @@ def inset_topic(md, contents, parm, discourse):
                 post_content = v + str('。'*int(20-len(v)))
             post_content = v
         logger.info("{0}\n內容：\n{1}\n".format(post_title, post_content))
-        #logger.info(discourse.post_topics(content=post_content,
-        #                                  title=post_title, 
-        #                                  category=contents[0]))
+        
+        if not DEBUG:
+            logger.info(discourse.post_topics(content=post_content,
+                                              title=post_title, 
+                                              category=contents[0]))
 
 
 def insert_discourse(id, category, summary_data, parm, discourse):
@@ -177,7 +162,7 @@ def deploy(api_username, api_key, name):
 
     # Discourse settings
     discourse = Discourse(
-        url = 'https://talk.vtaiwan.tw',
+        host = 'https://talk.vtaiwan.tw',
         api_username=api_username,
         api_key=api_key)
 
@@ -193,7 +178,6 @@ def deploy(api_username, api_key, name):
     else:
         category_id = 134
 
-    # TODO()移到 DEBUG MODE
     insert_discourse(id=category_id,
                      category=category,
                      summary_data=summary_data,
@@ -201,15 +185,16 @@ def deploy(api_username, api_key, name):
                      discourse=discourse)
     return 'Success.'
 
+
 def supervisors():
     signal = Signal()
     spinner = threading.Thread(target=spin,
                                args=('\u2603  Deploy ', signal))
     print('spinner object:', spinner)
     spinner.start()
-    result = deploy(api_username='vtaiwan',
-                    api_key='',
-                    name='')
+    result = deploy(api_username=os.environ.get('vTaiwan_api_user'),
+                    api_key=os.environ.get('vTaiwan_api_key'),
+                    name='directors-election-gitbook')
     signal.go = False
     spinner.join()
     return result
@@ -220,12 +205,15 @@ if __name__ == '__main__':
                         level=logging.INFO, 
                         format='%(asctime)s:%(name)s:%(levelname)s:%(message)s')
     
-    
     #create_content(name='directors-election-gitbook', githubfile='SUMMARY.md')
+    #deploy(api_username=os.environ.get('vTaiwan_api_user'),
+    #       api_key=os.environ.get('vTaiwan_api_key'),
+    #       name='directors-election-gitbook')
+
     result = supervisors()
     print('Result:', result)
-    #deploy(api_username='vtaiwan',
-    #       api_key='0f7fd879262b40b66fff2c136ed4650dadec10fb999f79d6df27eefce4fba826',
-    #       name='directors-election-gitbook')
+
+
+
     
 
