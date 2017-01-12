@@ -58,8 +58,8 @@
 ```
 
 #### 快樂的取得 `SUMMARY.md` 內容有兩種方式
-+ 尚未建立物件時，直接設定物件參數 `parm = Parser(filename='vtaiwan.json', githubfile='SUMMARY.md')`
-+ 已經建立物件 `parm = Parser(filename='vtaiwan.json', githubfile='package.json')`，直接透過 `setter` 方法 `parm.githubfile = "SUMMARY.md"` 轉為讀取 `SUMMARY.md`
++ 尚未建立物件時，直接設定物件參數 `parm = Parser(name='directors-election-gitbook', githubfile='SUMMARY.md')`
++ 已經建立物件 `parm = Parser(name='directors-election-gitbook', githubfile='package.json')`，直接透過 `setter` 方法 `parm.githubfile = "SUMMARY.md"` 轉為讀取 `SUMMARY.md`
 
 ```
 # Get SUMMARY.md content
@@ -68,7 +68,7 @@
 
 ## 測試
 
-請在專案內執行 `py.test`
+請進入專案內資料夾內執行 `py.test`
 
 
 ## LICENSE
