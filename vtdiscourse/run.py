@@ -226,20 +226,22 @@ def supervisors(api_key, api_username, name):
     return result
 
 
+def test():
+    create_content(name='directors-election-gitbook', githubfile='SUMMARY.md')
+    deploy(api_username=os.environ.get('vTaiwan_api_user'),
+           api_key=os.environ.get('vTaiwan_api_key'),
+           name='directors-election-gitbook')
+
+
 if __name__ == '__main__':
     logging.basicConfig(filename='vtd.log',
                         level=logging.INFO, 
                         format='%(asctime)s:%(name)s:%(levelname)s:%(message)s')
-    
-    #create_content(name='directors-election-gitbook', githubfile='SUMMARY.md')
-    #deploy(api_username=os.environ.get('vTaiwan_api_user'),
-    #       api_key=os.environ.get('vTaiwan_api_key'),
-    #       name='directors-election-gitbook')
-
     result = supervisors(api_key=os.environ.get('vTaiwan_api_key'),
                          api_username=os.environ.get('vTaiwan_api_user'),
                          name='directors-election-gitbook')
     print('Result:', result)
+
 
 
 

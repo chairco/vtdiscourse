@@ -94,7 +94,6 @@ class Parser(Create):
     def get_gitbook_url(self):
         # return gitbook url
         g0v_page = "https://g0v.github.io/"
-        #name = self._content().get('github')[0].get('name')
         name = self._content
         return g0v_page + name
 
