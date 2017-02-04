@@ -101,8 +101,9 @@ def parser_to_hierarchical(order_data):
     from bs4 import BeautifulSoup as bs
     
     soup = bs(order_data, 'html.parser') #BeautifuleSoup Dataset
+    
+    #TODO要處理有內文的 h1
     h1 = soup.find_all('h1')
-
     data = [i.strip() for i in re.split('<h1>|</h1>',order_data) if i!='']
     title = data[0]
     
@@ -125,6 +126,7 @@ def inset_topic(md, contents, parm, discourse):
     for k, v in hierarchical_data.get(contents[0]).items():
         post_title = k
         post_content = v
+        
         if not DEBUG:
             ret = discourse.post_category(category=contents[0])
             if ret == False:
@@ -136,6 +138,8 @@ def inset_topic(md, contents, parm, discourse):
             logger.info(discourse.post_topics(content=post_content,
                                               title=post_title, 
                                               category=contents[0]))
+        else:
+            print('Now DEBUG MODE, post_title = {0}, post_content = {1}'.format(post_title, post_content))
 
 
 def insert_discourse(id, category, summary_data, parm, discourse):
@@ -156,9 +160,7 @@ def insert_discourse(id, category, summary_data, parm, discourse):
 
     for md in datas:
         if md != 'README.md':
-        #if md == '2.md':
             contents = datas.get(md).split('\r\n')
-            #if md == '1.md': print(contents)
             print("準備建立 {0} 的 Topic: {1}" .format(md, contents[0]))
             logger.info("準備建立 {0} 的 Topic: {1}" .format(md, contents[0]))
             topic_data = search_discourse(discourse=discourse, term=contents[0])
@@ -218,9 +220,8 @@ def deploy(api_username, api_key, name):
             logger.info('Create Category success.')
             category_id = ret.get('category').get('id')
     else:
-        # should remove
-        #category_id = 134
-        logger.info('DEBUG mode')
+        #category_id = ???
+        print('DEBUG MODE')
         sys.exit(255)
 
     insert_discourse(id=category_id,
@@ -229,7 +230,6 @@ def deploy(api_username, api_key, name):
                      parm=parm,
                      discourse=discourse)
     logger.info('{0} Finish {1}'.format('-'*10, '-'*10))
-    
     return 'Deploy to talk.vTaiwan Success, Please check vtd.log.'
 
 

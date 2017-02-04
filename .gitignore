@@ -3,6 +3,8 @@
 /env
 get_content.sh
 vtdiscourse/content.json
+run.sh
+run2.py
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
