@@ -23,7 +23,7 @@ import CommonMark
 
 
 logger = logging.getLogger(__name__)
-DEBUG = True
+DEBUG = False
 
 
 class Signal:
@@ -37,7 +37,7 @@ def spin(msg, signal):
         write(status)
         flush()
         write('\x08' * len(status))
-        time.sleep(.1)
+        time.sleep(.01)
         if not signal.go:
             break
     write(' ' * len(status) + '\x08' * len(status))
@@ -87,30 +87,52 @@ def parser_markdown(markdown_data):
     from markdown_to_json.vendor import CommonMark
     from markdown_to_json.markdown_to_json import Renderer, CMarkASTNester
 
-    ast = CommonMark.DocParser().parse(markdown_data)
-    list_nested = CMarkASTNester().nest(ast)
-    stringified = Renderer().stringify_dict(list_nested)
-    return stringified
+    import CommonMark
+    
+    parser = CommonMark.Parser()
+    ast = parser.parse(markdown_data)
+    renderer = CommonMark.HtmlRenderer()
+    html = renderer.render(ast)
+    return html
 
 
+def parser_to_hierarchical(order_data):
+    import re
+    from bs4 import BeautifulSoup as bs
+    
+    soup = bs(order_data, 'html.parser') #BeautifuleSoup Dataset
+    h1 = soup.find_all('h1')
+
+    data = [i.strip() for i in re.split('<h1>|</h1>',order_data) if i!='']
+    title = data[0]
+    
+    h2 = soup.find_all('h2')
+    h2_dict = dict()
+    h2_data = [i.strip() for i in re.split('<h2>|</h2>', data[1]) if i!='']
+    for i in h2:
+        for j in range(0, len(h2_data)):
+            if re.split('<h2>|</h2>',str(i))[1] == str(h2_data[j]):
+                h2_dict.setdefault(h2_data[j], h2_data[j+1])
+    hierarchical_data = {title: h2_dict}
+    return hierarchical_data
+
+    
 def inset_topic(md, contents, parm, discourse):
     parm.githubfile = md
     order_data = parser_markdown(markdown_data=parm.get_content)
-    for k , v in order_data.get(contents[0]).items():
+    hierarchical_data = parser_to_hierarchical(order_data=order_data)
+
+    for k, v in hierarchical_data.get(contents[0]).items():
         post_title = k
-        if isinstance(v, list):
-            post_content = '。\n'.join(["* "+i for i in v])
-        elif isinstance(v, dict):
-            for k2, v2 in v.items():
-                content = '。\n'.join(["* "+i for i in v2])
-            post_content = k2 + '\n' + content
-        else:
-            if len(v) < 20:
-                post_content = v + str('。'*int(20-len(v)))
-            post_content = v
-        logger.info("{0}\n內容：\n{1}\n".format(post_title, post_content))
-        
+        post_content = v
         if not DEBUG:
+            ret = discourse.post_category(category=contents[0])
+            if ret == False:
+                print("topic: {0} 建立成功，準備建立子類別: {1}。".format(contents[0],
+                                                                      post_title))
+            else:
+                print("topic: {0} 已經存在，準備建立子類別: {1}。".format(contents[0],
+                                                                      post_title))
             logger.info(discourse.post_topics(content=post_content,
                                               title=post_title, 
                                               category=contents[0]))
@@ -134,21 +156,24 @@ def insert_discourse(id, category, summary_data, parm, discourse):
 
     for md in datas:
         if md != 'README.md':
+        #if md == '2.md':
             contents = datas.get(md).split('\r\n')
-            print("建立 {0} 的 Topic: {1}" .format(md, contents[0]))
-            logger.info("建立 {0} 的 Topic: {1}" .format(md, contents[0]))
+            #if md == '1.md': print(contents)
+            print("準備建立 {0} 的 Topic: {1}" .format(md, contents[0]))
+            logger.info("準備建立 {0} 的 Topic: {1}" .format(md, contents[0]))
             topic_data = search_discourse(discourse=discourse, term=contents[0])
             if topic_data == None:
-                print('準備建立子類別 {0} 與內容.'.format(contents[0]))
-                logger.info('準備建立子類別 {0} 與內容.'.format(contents[0])) # 建立 sub_catrgory
-                #logger.info(discourse.post_category(name=contents[0],parent=category))
+                print('建立子類別 {0} 與內容.'.format(contents[0]))
+                logger.info('建立子類別 {0} 與內容.'.format(contents[0])) # 建立 sub_catrgory
                 inset_topic(md=md, contents=contents, parm=parm, discourse=discourse)
+                print('<<建立成功>>\n')
             else:
-                #inset_topic(md=md, contents=contents, parm=parm, discourse=discourse) # 暫時
                 print("已經存在，請手動修改 Title: {0}, ID: {1}".format(topic_data.get('title'),
                                                                      topic_data.get('id')))
                 logger.info("已經存在，請手動修改 Title: {0}, ID: {1}".format(topic_data.get('title'),
                                                                            topic_data.get('id')))
+                inset_topic(md=md, contents=contents, parm=parm, discourse=discourse) # 暫時
+                print('<<請手動修改>>\n')
 
 
 def search_discourse(discourse, term):
@@ -166,7 +191,7 @@ def deploy(api_username, api_key, name):
     # Get package.json content
     parm = Parser(name=name, githubfile='package.json')
     category = parm.get_name
-    print('Start deploy, 法案: ' + category)
+    print('Start deploy, ' + category)
     logger.info('Start deploy, 法案: ' + category)
     
     # Get the SUMMARY file content
@@ -193,7 +218,10 @@ def deploy(api_username, api_key, name):
             logger.info('Create Category success.')
             category_id = ret.get('category').get('id')
     else:
-        category_id = 134
+        # should remove
+        #category_id = 134
+        logger.info('DEBUG mode')
+        sys.exit(255)
 
     insert_discourse(id=category_id,
                      category=category,
@@ -227,10 +255,10 @@ def supervisors(api_key, api_username, name):
 
 
 def test():
-    create_content(name='directors-election-gitbook', githubfile='SUMMARY.md')
+    create_content(name='securitization-ref1-gitbook', githubfile='SUMMARY.md')
     deploy(api_username=os.environ.get('vTaiwan_api_user'),
            api_key=os.environ.get('vTaiwan_api_key'),
-           name='directors-election-gitbook')
+           name='securitization-ref1-gitbook')
 
 
 if __name__ == '__main__':
@@ -239,7 +267,7 @@ if __name__ == '__main__':
                         format='%(asctime)s:%(name)s:%(levelname)s:%(message)s')
     result = supervisors(api_key=os.environ.get('vTaiwan_api_key'),
                          api_username=os.environ.get('vTaiwan_api_user'),
-                         name='directors-election-gitbook')
+                         name='securitization-ref1-gitbook')
     print('Result:', result)
 
 

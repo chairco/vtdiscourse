@@ -1,6 +1,8 @@
 # for me
 /demo.egg-info
 /env
+get_content.sh
+vtdiscourse/content.json
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
