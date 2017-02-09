@@ -2,6 +2,8 @@
 這個工具是專為 [talk vTaiwan](https://talk.vtaiwan.tw/) 所建立。
 目的是當法案建立一個 gitbook 後要根據其內容建立對應的討論區與問題。gitbook 是建立在 g0v 的 gihub repo，因此做法是根據 g0v repo 名稱去爬出 `packeage.json` 的法案名稱與 `SUMMARY.md` 與對應的 `.md` 檔案的內容。
 
+文件可參考 [docs](http://vtdiscourse.readthedocs.io/en/latest/)
+
 
 ## 說明
 + `package.json`: gitbook 相關設定，用其來建立討論區分類法案的中文名稱。
