@@ -37,7 +37,7 @@ def spin(msg, signal):
         write(status)
         flush()
         write('\x08' * len(status))
-        time.sleep(.01)
+        time.sleep(.1)
         if not signal.go:
             break
     write(' ' * len(status) + '\x08' * len(status))
@@ -102,8 +102,15 @@ def parser_to_hierarchical(order_data):
     
     soup = bs(order_data, 'html.parser') #BeautifuleSoup Dataset
     
-    #TODO要處理有內文的 h1
     h1 = soup.find_all('h1')
+    if len(h1) > 1:
+        print("有兩個 H1 內容，會造成資料遺失！！")
+        logger.error("有兩個 H1 內容，會造成資料遺失！！")
+    elif len(h1) == 0:
+        logger.error("沒有 H1 內容，錯誤！！")
+        raise ValueError("沒有 H1 內容，錯誤！！")
+
+    #TODO要處理有內文的 h1
     data = [i.strip() for i in re.split('<h1>|</h1>',order_data) if i!='']
     title = data[0]
     
@@ -126,7 +133,7 @@ def inset_topic(md, contents, parm, discourse):
     for k, v in hierarchical_data.get(contents[0]).items():
         post_title = k
         post_content = v
-        
+
         if not DEBUG:
             ret = discourse.post_category(category=contents[0])
             if ret == False:
@@ -143,10 +150,9 @@ def inset_topic(md, contents, parm, discourse):
 
 
 def insert_discourse(id, category, summary_data, parm, discourse):
-    """insert discourse, 先檢查有沒有 README.md"""
-    # 讀取 content.json
+    """Insert discourse, 先檢查有沒有 README.md"""
     # 根據 MD 檔案建立對應的 category 和內容。並且 Insert。改用 OrderedDict 結構
-    # TODO()改成讀取網站上的 content.json
+    # TODO(chairco@gmail.com)改成讀取網站上的 content.json, 因為已經轉好格式。
     json_data = read_content()
     discourse_data = list()
     for md in json_data:
@@ -193,8 +199,8 @@ def deploy(api_username, api_key, name):
     # Get package.json content
     parm = Parser(name=name, githubfile='package.json')
     category = parm.get_name
-    print('Start deploy, ' + category)
-    logger.info('Start deploy, 法案: ' + category)
+    print('Start Deploy, ' + category)
+    logger.info('Start Deploy, 法案: ' + category)
     
     # Get the SUMMARY file content
     parm.githubfile = 'SUMMARY.md'
@@ -215,22 +221,26 @@ def deploy(api_username, api_key, name):
             print('Category already exist.')
             logger.info('Category already exist.')
             category_id = search_discourse(discourse=discourse, term=category).get('category_id')
+            print('Category id =', str(category_id))
         else:
-            print('Create Category success.')
-            logger.info('Create Category success.')
+            print('Create Category Success.')
+            logger.info('Create Category Success.')
             category_id = ret.get('category').get('id')
+            print('Category id =', str(category_id))
+        try:
+            insert_discourse(id=category_id,
+                         category=category,
+                         summary_data=summary_data,
+                         parm=parm,
+                         discourse=discourse)
+            logger.info('{0} Finish {1}'.format('-'*10, '-'*10))
+        except Exception as e:
+            raise e
+        return 'Deploy to talk.vTaiwan Success, Please check vtd.log.'
     else:
-        #category_id = ???
-        print('DEBUG MODE')
-        sys.exit(255)
-
-    insert_discourse(id=category_id,
-                     category=category,
-                     summary_data=summary_data,
-                     parm=parm,
-                     discourse=discourse)
-    logger.info('{0} Finish {1}'.format('-'*10, '-'*10))
-    return 'Deploy to talk.vTaiwan Success, Please check vtd.log.'
+        print('Now DEBUG MODE')
+        logger.info('{0} Now DEBUG MODE {1}'.format('-'*10, '-'*10))
+        return 'Not Deploy anything, Please check vtd.log.'
 
 
 def supervisors(api_key, api_username, name):
@@ -265,13 +275,9 @@ if __name__ == '__main__':
     logging.basicConfig(filename='vtd.log',
                         level=logging.INFO, 
                         format='%(asctime)s:%(name)s:%(levelname)s:%(message)s')
+    logger.info('{0} New Job start {1}'.format('-'*10, '-'*10))
     result = supervisors(api_key=os.environ.get('vTaiwan_api_key'),
                          api_username=os.environ.get('vTaiwan_api_user'),
                          name='securitization-ref1-gitbook')
     print('Result:', result)
-
-
-
-
-    
 
