@@ -44,13 +44,13 @@ def spin(msg, signal):
 
 
 def create_content(name, githubfile):
-    logger.info('start creare JSON file.')
+    logger.info('Start creare JSON file.')
     parm = Parser(name=name, githubfile=githubfile)  # Get SUMMARY.md content and create to json.
     
     # Parser the md file.
     topics = parm.get_topics_content
     parm.dumps(data=topics)
-    logger.info('create JSON file "content.json" success.')
+    logger.info('Create JSON file "content.json" Success.')
     return 'Create content.json Success.'
 
 
@@ -131,22 +131,17 @@ def inset_topic(md, contents, parm, discourse):
     hierarchical_data = parser_to_hierarchical(order_data=order_data)
 
     for k, v in hierarchical_data.get(contents[0]).items():
-        post_title = k
-        post_content = v
-
-        if not DEBUG:
-            ret = discourse.post_category(category=contents[0])
-            if ret == False:
-                print("topic: {0} 建立成功，準備建立子類別: {1}。".format(contents[0],
-                                                                      post_title))
-            else:
-                print("topic: {0} 已經存在，準備建立子類別: {1}。".format(contents[0],
-                                                                      post_title))
-            logger.info(discourse.post_topics(content=post_content,
-                                              title=post_title, 
-                                              category=contents[0]))
+        post_title, post_content = k, v
+        ret = discourse.post_category(category=contents[0])
+        if ret == False:
+            print("topic: {0} 建立成功，準備建立子類別: {1}。".format(contents[0],
+                                                                  post_title))
         else:
-            print('Now DEBUG MODE, post_title = {0}, post_content = {1}'.format(post_title, post_content))
+            print("topic: {0} 已經存在，準備建立子類別: {1}。".format(contents[0],
+                                                                  post_title))
+        logger.info(discourse.post_topics(content=post_content,
+                                          title=post_title, 
+                                          category=contents[0]))
 
 
 def insert_discourse(id, category, summary_data, parm, discourse):
@@ -155,34 +150,36 @@ def insert_discourse(id, category, summary_data, parm, discourse):
     # TODO(chairco@gmail.com)改成讀取網站上的 content.json, 因為已經轉好格式。
     json_data = read_content()
     discourse_data = list()
+    # create orderdict dataset, structure is key=md's filename, value=md's value
     for md in json_data:
         for summary in summary_data:
             if md.get(summary):
                 discourse_data.append((summary, parser_html(json_data=md.get(summary))))
     datas = OrderedDict(discourse_data)
 
-    topics = discourse.get_category_topics(name=str(id)+'-category')
-    topics_data = OrderedDict([(topic.get('id'), topic.get('title'))for topic in topics]) # 所有的 category
-
+    # Mark at 20170210 because can't get all the topics in category(maybe is the discourse bug)
+    #topics = discourse.get_category_topics(name=str(id)+'-category')
+    #topics_data = OrderedDict([(topic.get('id'), topic.get('title'))for topic in topics]) # 所有的 category
+    
     for md in datas:
         if md != 'README.md':
             contents = datas.get(md).split('\r\n')
-            print("準備建立 {0} 的 Topic: {1}" .format(md, contents[0]))
-            logger.info("準備建立 {0} 的 Topic: {1}" .format(md, contents[0]))
+            print("準備建立 {0} 的 Topic:[{1}]" .format(md, contents[0]))
+            logger.info("準備建立 {0} 的 Topic:[{1}]" .format(md, contents[0]))
             topic_data = search_discourse(discourse=discourse, term=contents[0])
             if topic_data == None:
-                print('建立子類別 {0} 與內容.'.format(contents[0]))
-                logger.info('建立子類別 {0} 與內容.'.format(contents[0])) # 建立 sub_catrgory
-                inset_topic(md=md, contents=contents, parm=parm, discourse=discourse)
+                print('建立子類別 [{0}] 與內容'.format(contents[0]))
+                logger.info('建立子類別 [{0}] 與內容'.format(contents[0]))
+                inset_topic(md=md, contents=contents, parm=parm, discourse=discourse) # 建立 sub_catrgory
                 print('<<建立成功>>\n')
             else:
-                print("已經存在，請手動修改 Title: {0}, ID: {1}".format(topic_data.get('title'),
-                                                                     topic_data.get('id')))
-                logger.info("已經存在，請手動修改 Title: {0}, ID: {1}".format(topic_data.get('title'),
-                                                                           topic_data.get('id')))
+                print("可能存在，如果相同請手動修改 'Topic':[{0}], 'ID':[{1}]".format(topic_data.get('title'),
+                                                                                topic_data.get('id')))
+                logger.info("可能存在，如果相同請手動修改 'Topic':[{0}], 'ID':[{1}]".format(topic_data.get('title'),
+                                                                                topic_data.get('id')))
                 inset_topic(md=md, contents=contents, parm=parm, discourse=discourse) # 暫時
                 print('<<請手動修改>>\n')
-
+    
 
 def search_discourse(discourse, term):
     c = discourse.serarch_topic(term=term, key='topics')
@@ -199,14 +196,14 @@ def deploy(api_username, api_key, name):
     # Get package.json content
     parm = Parser(name=name, githubfile='package.json')
     category = parm.get_name
-    print('Start Deploy, ' + category)
-    logger.info('Start Deploy, 法案: ' + category)
+    print('Start Deploy, 法案：{0} '.format(category))
+    logger.info('Start Deploy, 法案：{0} '.format(category))
     
     # Get the SUMMARY file content
     parm.githubfile = 'SUMMARY.md'
     summary_data = parm.get_summary
-    print('Summary_data: {0}' .format(', '.join(summary_data)))
-    logger.info('Summary_data: {0}' .format(', '.join(summary_data)))
+    print('SUMMARY.md: {0}' .format(', '.join(summary_data)))
+    logger.info('SUMMARY.md: {0}.' .format(', '.join(summary_data)))
 
     # Discourse settings
     discourse = Discourse(
@@ -218,25 +215,24 @@ def deploy(api_username, api_key, name):
     if not DEBUG:
         ret = discourse.post_category(category=category)
         if ret == False:
-            print('Category already exist.')
-            logger.info('Category already exist.')
+            print('Category:[{0}] 已經存在'.format(category))
+            logger.info('Category:[{0}] 已經存在'.format(category))
             category_id = search_discourse(discourse=discourse, term=category).get('category_id')
             print('Category id =', str(category_id))
         else:
-            print('Create Category Success.')
-            logger.info('Create Category Success.')
+            print('Create Category:[{0}] Success'.format(category))
+            logger.info('Create Category:[{0}] Success'.format(category))
             category_id = ret.get('category').get('id')
             print('Category id =', str(category_id))
         try:
             insert_discourse(id=category_id,
-                         category=category,
-                         summary_data=summary_data,
-                         parm=parm,
-                         discourse=discourse)
-            logger.info('{0} Finish {1}'.format('-'*10, '-'*10))
+                             category=category,
+                             summary_data=summary_data,
+                             parm=parm,
+                             discourse=discourse)
+            return 'Deploy to talk.vTaiwan Success, Please check vtd.log.'
         except Exception as e:
             raise e
-        return 'Deploy to talk.vTaiwan Success, Please check vtd.log.'
     else:
         print('Now DEBUG MODE')
         logger.info('{0} Now DEBUG MODE {1}'.format('-'*10, '-'*10))
@@ -246,16 +242,22 @@ def deploy(api_username, api_key, name):
 def supervisors(api_key, api_username, name):
     signal = Signal()
     spinner = threading.Thread(target=spin,
-                               args=('\u2603  Deploy ', signal))
-    #print('spinner object:', spinner)
+                               args=('\u2603  <Deploy>', signal))
     spinner.start()
     try:
+        logger.info('{0} New Job start {1}'.format('-'*10, '-'*10))
+
         result = create_content(name=name,
                                 githubfile='SUMMARY.md')
         print('Result:', result)
+        logger.info('Result: {0}'.format(result))
+        
         result = deploy(api_username=api_username,
                         api_key=api_key,
                         name=name)
+        logger.info('Result: {0}'.format(result))
+        print('Result:', result)
+        logger.info('{0} Finish {1}'.format('-'*10, '-'*10))
     except Exception as e:
         raise e
     finally:
@@ -275,9 +277,8 @@ if __name__ == '__main__':
     logging.basicConfig(filename='vtd.log',
                         level=logging.INFO, 
                         format='%(asctime)s:%(name)s:%(levelname)s:%(message)s')
-    logger.info('{0} New Job start {1}'.format('-'*10, '-'*10))
-    result = supervisors(api_key=os.environ.get('vTaiwan_api_key'),
-                         api_username=os.environ.get('vTaiwan_api_user'),
-                         name='securitization-ref1-gitbook')
-    print('Result:', result)
+    
+    supervisors(api_key=os.environ.get('vTaiwan_api_key'),
+                api_username=os.environ.get('vTaiwan_api_user'),
+                name='securitization-ref1-gitbook')
 
