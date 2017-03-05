@@ -48,17 +48,21 @@ class Parser(Create):
             return None
 
     @property
-    def get_topics_content(self, topics_data=list()):
+    def get_topics_content(self, topics_data=None):
         """create json base
         return Orderdict() format 
         """
         summary = self.get_summary
+        if topics_data is None:
+            self.topics_data = []
+        else:
+            self.topics_data = topics_data
         for topic in summary:
             self.githubfile = topic # 改讀 topic file
             htmlcontent = markdown.markdown(self.get_content)
             soup = bs(htmlcontent, 'html.parser')
-            topics_data.append(OrderedDict([(topic, [{tag.name: tag.string} for tag in soup.find_all(True)])])) 
-        return topics_data
+            self.topics_data.append(OrderedDict([(topic, [{tag.name: tag.string} for tag in soup.find_all(True)])])) 
+        return self.topics_data
 
     @property
     def get_name(self):
@@ -153,11 +157,8 @@ class Discourse(DiscourseClient):
         else:
             r = lambda: random.randint(0,255)
             color = '%02X%02X%02X' % (r(), r(), r())
-            return self._create_category(name=category,
-                                        color=color,
-                                        permissions=permissions,
-                                        parent=parent,
-                                        **kwargs)
+            return self._create_category(name=category, color=color, permissions=permissions, 
+                                         parent=parent, **kwargs)
 
     def post_topics(self, content, **kwargs):
         """This is create the post with the category, use kwargs
