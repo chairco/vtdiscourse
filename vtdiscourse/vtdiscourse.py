@@ -1,7 +1,6 @@
 # -*- coding: utf-8
 # An g0v's project vTaiwan module.
 # module author:: chairco <chairco@gmail.com>
-
 import os
 import re
 import json
@@ -19,6 +18,7 @@ from collections import OrderedDict
 
 
 class Create(object):
+
     def __init__(self, *args, **kwargs):
         self.outfile = 'content.json'
 
@@ -33,6 +33,7 @@ class Parser(Create):
     :name
     :githubfile
     """
+
     def __init__(self, name, githubfile, *args, **kwargs):
         super(Parser, self).__init__(name, githubfile, *args, **kwargs)
         self.name = name
@@ -58,10 +59,11 @@ class Parser(Create):
         else:
             self.topics_data = topics_data
         for topic in summary:
-            self.githubfile = topic # 改讀 topic file
+            self.githubfile = topic  # 改讀 topic file
             htmlcontent = markdown.markdown(self.get_content)
             soup = bs(htmlcontent, 'html.parser')
-            self.topics_data.append(OrderedDict([(topic, [{tag.name: tag.string} for tag in soup.find_all(True)])])) 
+            self.topics_data.append(OrderedDict(
+                [(topic, [{tag.name: tag.string} for tag in soup.find_all(True)])]))
         return self.topics_data
 
     @property
@@ -76,8 +78,8 @@ class Parser(Create):
         summary = self.get_content
         html = markdown.markdown(summary)
         soup = bs(html, 'html.parser')
-        #print(soup.prettify())
-        return [ link.get('href') for link in soup.find_all('a')]
+        # print(soup.prettify())
+        return [link.get('href') for link in soup.find_all('a')]
 
     @property
     def get_url(self):
@@ -88,7 +90,7 @@ class Parser(Create):
 
     @get_url.setter
     def githubfile(self, githubfile):
-        self._githubfile = githubfile 
+        self._githubfile = githubfile
 
     @property
     def get_gitbook(self):
@@ -111,11 +113,12 @@ class Parser(Create):
 
 class Discourse(DiscourseClient):
     """Get the Discourse content
-    
+
     Search a session from Discourse
     Create a new session for Discourse
     host, username, key should exist then yield error
     """
+
     def __init__(self, host, api_username, api_key, *args, **kwargs):
         super(Discourse, self).__init__(host, api_username, api_key)
         self.host = host
@@ -139,9 +142,9 @@ class Discourse(DiscourseClient):
         return client
 
     def serarch_topic(self, term, key, **kwargs):
-        keys = ['categories', 'grouped_search_result', 
+        keys = ['categories', 'grouped_search_result',
                 'users', 'topics', 'posts']
-        if key not in keys: 
+        if key not in keys:
             raise KeyError('argument should be categories, grouped_search_result,'
                            'users, topics, posts')
         content = self._search(term=term, **kwargs)
@@ -155,9 +158,9 @@ class Discourse(DiscourseClient):
         if category in self.get_all_categories:
             return False
         else:
-            r = lambda: random.randint(0,255)
+            r = lambda: random.randint(0, 255)
             color = '%02X%02X%02X' % (r(), r(), r())
-            return self._create_category(name=category, color=color, permissions=permissions, 
+            return self._create_category(name=category, color=color, permissions=permissions,
                                          parent=parent, **kwargs)
 
     def post_topics(self, content, **kwargs):
@@ -188,9 +191,11 @@ class Discourse(DiscourseClient):
         if not isinstance(id, int):
             raise ValueError('{0} Should be INT'.format(id))
         if id >= len(self.get_category_topics):
-            raise ValueError('{0} list index out of range, len = {1}'.format(id, len(self.get_category_topics)-1))
+            raise ValueError('{0} list index out of range, len = {1}'.format(
+                id, len(self.get_category_topics) - 1))
         if key not in self.get_category_topics[id]:
-            raise KeyError('{0} Not exist in {1}'.format(key, [self.get_category_topics[id].keys()]))
+            raise KeyError('{0} Not exist in {1}'.format(
+                key, [self.get_category_topics[id].keys()]))
         return self.get_category_topics[id].get(key)
 
     @property
@@ -202,7 +207,7 @@ class Discourse(DiscourseClient):
         return self._get('/search.json', **kwargs)
 
     def _create_category(self, name, color, text_color='FFFFFF',
-                        permissions=None, parent=None, **kwargs):
+                         permissions=None, parent=None, **kwargs):
         """Create the category on Discourse
             :name       :
             :color      :
@@ -211,11 +216,6 @@ class Discourse(DiscourseClient):
             :parent     :
             :kwargs     :
             >>> discourse.create_category(name="自動產生", color="3c3945")
-            """
+        """
         return self.client.create_category(name=name, color=color, text_color=text_color,
                                            permissions=permissions, parent=parent, **kwargs)
-
-
-        
-
-
